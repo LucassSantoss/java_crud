@@ -15,8 +15,7 @@ public class AlunoService {
         this.dao = dao;
     }
 
-    public String getAlunosComStatus() {
-        List<Aluno> alunos = dao.buscarTodos();
+    public String getAlunosComStatus(List<Aluno> alunos) {
         return alunos.stream()
                 .map(aluno -> STR.
                         """

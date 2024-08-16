@@ -8,6 +8,7 @@ import org.example.service.AlunoService;
 import org.example.service.JPAUtil;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 import java.util.Scanner;
 import java.util.logging.Level;
@@ -45,18 +46,19 @@ public class Main {
             switch (opcao) {
                 case 1 -> {
                     System.out.println("CADASTRO DE ALUNO:");
-                    dao.cadastrar(criarAluno(scanner));
+                    boolean cadastrado = dao.cadastrar(criarAluno(scanner));
+                    if (cadastrado) {
+                        System.out.println("\nCadastro efetuado com sucesso!");
+                    } else {
+                        System.out.println("\nAluno não encontrado!");
+                    }
                     System.out.println("\n");
-                    // Mensagem de sucesso?
                 }
                 case 2 -> {
                     System.out.println("EXCLUIR ALUNO:");
                     System.out.print("Digite o nome: ");
                     String nome = scanner.nextLine();
-                    Optional<Aluno> aluno = dao.buscarPorNome(nome);
-                    if (aluno.isPresent()) {
-                        dao.remover(nome);
-                        // Verificar se foi mesmo removido
+                    if (dao.remover(nome)) {
                         System.out.println("\nAluno removido com sucesso!\n");
                     } else {
                         System.out.println("\nAluno não encontrado!\n");
@@ -71,9 +73,12 @@ public class Main {
                         System.out.println("Dados do aluno:");
                         System.out.println(aluno.get());
                         System.out.println("\nNOVOS DADOS:");
-                        // Verificar se a edição deu certo ou não
-                        dao.editar(nomeAntigo, criarAluno(scanner));
-                        System.out.println("\nAluno Alterado com sucesso!\n"); // E se der errado a edição ainda imprime isso?????
+                        boolean editado = dao.editar(aluno.get(), criarAluno(scanner));
+                        if (editado) {
+                            System.out.println("\nAluno editado com sucesso!\n");
+                        } else {
+                            System.out.println("\nNão foi possível, pois este nome já está cadastrado!\n");
+                        }
                     } else {
                         System.out.println("\nAluno não encontrado!\n");
                     }
@@ -91,8 +96,13 @@ public class Main {
                     }
                 }
                 case 5 -> {
-                    System.out.println("Exibindo todos os alunos: \n");
-                    System.out.println(service.getAlunosComStatus());
+                    System.out.println("Exibindo todos os alunos: ");
+                    List<Aluno> alunos = dao.buscarTodos();
+                    if (!alunos.isEmpty()) {
+                        System.out.println(service.getAlunosComStatus(alunos));
+                    } else {
+                        System.out.println("\nNenhum aluno foi cadastrado ainda!\n");
+                    }
                 }
                 case 6 -> {
                     System.out.println("Encerrando programa...");

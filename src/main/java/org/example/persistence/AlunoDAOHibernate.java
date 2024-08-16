@@ -15,10 +15,14 @@ public class AlunoDAOHibernate implements AlunoDAO {
     }
 
     @Override
-    public void cadastrar(Aluno aluno) {
+    public boolean cadastrar(Aluno aluno) {
+        Optional<Aluno> alunoOpcional = buscarPorNome(aluno.getNome());
+        if (alunoOpcional.isPresent()) return false;
+
         em.getTransaction().begin();
         em.persist(aluno);
         em.getTransaction().commit();
+        return true;
     }
 
 
@@ -30,27 +34,29 @@ public class AlunoDAOHibernate implements AlunoDAO {
                     .setParameter("nome", nome)
                     .getSingleResult());
         } catch (NoResultException e) {
-            System.err.println("O aluno " + nome + " não existe");
+            return Optional.empty();
         }
-        return Optional.empty();
     }
 
-    public void remover(String nome) {
+    public boolean remover(String nome) {
         Optional<Aluno> aluno = buscarPorNome(nome);
-        if (aluno.isEmpty()) return; // já tratado no buscarAluno()
+        if (aluno.isEmpty()) return false;
 
         em.getTransaction().begin();
         em.remove(aluno.get());
         em.getTransaction().commit();
+        return true;
     }
 
     @Override
-    public void editar(String nomeAntigoAluno, Aluno novoAluno) {
-        Optional<Aluno> antigoAlunoOptional = buscarPorNome(nomeAntigoAluno);
-        if (antigoAlunoOptional.isEmpty()) return; // já tratado no buscarAluno()
-        Aluno antigoAluno = antigoAlunoOptional.get();
+    public boolean editar(Aluno antigoAluno, Aluno novoAluno) {
+        Optional<Aluno> novoAlunoOpcional = buscarPorNome(novoAluno.getNome());
+        if (novoAlunoOpcional.isPresent()) {
+            if (!novoAluno.getNome().equals(antigoAluno.getNome())) return false;
+        }
+
         em.getTransaction().begin();
-        // Verificar se o nome já está cadastrado ????????????
+
         antigoAluno.setNome(novoAluno.getNome());
         antigoAluno.setRa(novoAluno.getRa());
         antigoAluno.setEmail(novoAluno.getEmail());
@@ -59,6 +65,7 @@ public class AlunoDAOHibernate implements AlunoDAO {
         antigoAluno.setNota3(novoAluno.getNota3());
 
         em.getTransaction().commit();
+        return true;
     }
 
     public List<Aluno> buscarTodos() {
