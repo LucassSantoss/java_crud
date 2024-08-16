@@ -1,54 +1,56 @@
-package org.example.dao;
+package org.example.persistence;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
 import org.example.model.Aluno;
 
 import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.Optional;
 
-public class AlunoDao_hibernate implements AlunoDao {
+public class AlunoDAOHibernate implements AlunoDAO {
     private EntityManager em;
 
-    public AlunoDao_hibernate(EntityManager em) {
+    public AlunoDAOHibernate(EntityManager em) {
         this.em = em;
     }
 
     @Override
     public void cadastrar(Aluno aluno) {
+        em.getTransaction().begin();
         em.persist(aluno);
+        em.getTransaction().commit();
     }
 
 
     @Override
-    public Aluno buscarPorNome(String nome) {
+    public Optional<Aluno> buscarPorNome(String nome) {
         try {
             String jpql = "select a from Aluno a where a.nome = :nome";
-            return em.createQuery(jpql, Aluno.class)
+            return Optional.ofNullable(em.createQuery(jpql, Aluno.class)
                     .setParameter("nome", nome)
-                    .getSingleResult();
+                    .getSingleResult());
         } catch (NoResultException e) {
             System.err.println("O aluno " + nome + " não existe");
         }
-        return null;
+        return Optional.empty();
     }
 
     public void remover(String nome) {
-        Aluno aluno = buscarPorNome(nome);
-        if (aluno == null) return; // já tratado no buscarAluno()
+        Optional<Aluno> aluno = buscarPorNome(nome);
+        if (aluno.isEmpty()) return; // já tratado no buscarAluno()
 
         em.getTransaction().begin();
-        em.remove(aluno);
+        em.remove(aluno.get());
         em.getTransaction().commit();
     }
 
     @Override
     public void editar(String nomeAntigoAluno, Aluno novoAluno) {
-        Aluno antigoAluno = buscarPorNome(nomeAntigoAluno);
-        if (nomeAntigoAluno == null) return; // já tratado no buscarAluno()
-
+        Optional<Aluno> antigoAlunoOptional = buscarPorNome(nomeAntigoAluno);
+        if (antigoAlunoOptional.isEmpty()) return; // já tratado no buscarAluno()
+        Aluno antigoAluno = antigoAlunoOptional.get();
         em.getTransaction().begin();
-
+        // Verificar se o nome já está cadastrado ????????????
         antigoAluno.setNome(novoAluno.getNome());
         antigoAluno.setRa(novoAluno.getRa());
         antigoAluno.setEmail(novoAluno.getEmail());
